@@ -18,7 +18,4 @@ $ roy add                                   # stages current changes
 $ roy send                                  # syncs the saved changes to main
 ```
 
-#### Change History 
-Change history uses SQLite3
-
 
