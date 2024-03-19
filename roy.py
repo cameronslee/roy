@@ -1,6 +1,7 @@
 # Roy: A Simple Version Control System
 
 import os
+import sys 
 import tempfile
 import shutil
 
@@ -45,9 +46,40 @@ def send(root):
     pass
 
 
+usage_string = """
+usage: roy [-h | --help] <command> [<args>] 
+
+commands:
+start a VCS 
+   setup    Setup directory for version control system
+show changes
+   diff     Show current changes to files that were made
+stage changes
+   add      Stage current changes
+sync changes
+   sync     Sync changes to main
+"""
+
+
 ### === Driver === ###
+def usage(msg=""):
+    print(usage_string)
+
+    if msg != "":
+        print(msg)
+
 def main():
-    vc = VC(BASE_DIR)
+    if len(sys.argv) < 2:
+        usage()
+        exit(1)
+
+    cmd = sys.argv[1]
+
+    match cmd:
+        case "-h":
+            usage()
+        case "--help":
+            usage()
 
 if __name__ == "__main__":
     main()
