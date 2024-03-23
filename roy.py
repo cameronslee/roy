@@ -4,13 +4,28 @@ import os
 import sys 
 import tempfile
 import shutil
+import hashlib
+from datetime import datetime
 
-BASE_DIR = ".roy/cache" # Data will reside in project specific directory
+### Hardcoded Config ###
+USR = "foo"
+### Hardcoded Config END ###
+
+# Denotes an initial commit
+NULL_SHA1 = 0000000000000000000000000000000000000000 
+
+BASE_DIR = ".roy/" # Data will reside in project specific directory
+MASTER_VOLUME = ".roy/master" 
+
+def perror(msg):
+    print("error: " + msg)
 
 # Each commit will be a singly linked list node
 class Commit:
-    def __init__(self, commit_message, files, timestamp):
+    def __init__(self, commit_id, author, commit_message, files, timestamp):
+        self.commit_id = commit_id
         self.commit_message = commit_message
+        self.author = author
         self.files = files  # Each commit, files will be updated
         self.timestamp = timestamp
         self.next = None
@@ -18,28 +33,59 @@ class Commit:
 # Version Control Instance
 # stores a reference to the head of commits
 class VC:
-    def __init__(self, basedir="", root=None, head_ref=None):
+    def __init__(self, basedir=BASE_DIR, head_ref=None):
         self.basedir = os.path.realpath(basedir)
-        self.tempdir = os.path.join(self.basedir, "tmp")
+        self.tempdir = os.path.join(self.basedir, "tmp/")
         os.makedirs(self.tempdir, exist_ok=True)
-
-        print(self.basedir)
-        print(self.tempdir)
-
-        self.root = root
-
         self.head_ref = head_ref
-        print(head_ref)
 
+# Build a linked list 
+# Reads master volume log, builds linked of each and returns a VC object
+# with the head_ref set
+def build_vc_instance():
+    pass
+
+def create_hash(name, timestamp, commit_msg):
+    m = hashlib.sha1()
+
+    m.update(str(name).encode('utf-8'))
+    m.update(str(timestamp).encode('utf-8'))
+    m.update(str(commit_msg).encode('utf-8'))
+
+    print(m.hexdigest())
+
+    return m
+
+def touch(path):
+    with open(path, 'a') as f:
+        os.utime(path, None) # set access and modified times
+        f.close()
 
 # Commands
 def setup():
+    # already exists, exit setup
+    if os.path.exists(BASE_DIR):
+        perror("roy version control system already set up")
+        return
+    
+    touch(MASTER_VOLUME)
+
+def diff(head_node):
+    # Open cache
+    # Compare differences
+    # Print to Screen
     pass
 
-def diff(root):
-    pass
+def add(head_node, commit_log):
+    # Write to cache
+    with open(MASTER_VOLUME, 'a') as f:
+        # create log
+        # if volume empty, pass null id to indicate start
 
-def add(root):
+        f.write(commit_log)
+        f.close()
+
+def log(root):
     pass
 
 def send(root):
@@ -80,6 +126,9 @@ def main():
             usage()
         case "--help":
             usage()
+        # Test: create hash
+        case "-ch":
+            create_hash("foo test", str(datetime.now()), "test commit") 
 
 if __name__ == "__main__":
     main()

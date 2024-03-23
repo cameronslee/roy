@@ -1,6 +1,17 @@
 # Roy: A Simple Version Control System
 
 ## Main Principles
+
+#### Centralized Source Control System
+Versioning and changes are commited to a single access point (that YOU own!)
+
+```
+      --------       ----------   update    ---------------
+      | Main | ----> | Roy    | <---------> |  System A   |
+      | Repo | <---- | Server |   commit    |  (client)   |
+      --------       ----------             ---------------
+```
+
 #### Simple Commands and Settings
 Roy should be intuitive. 
 
