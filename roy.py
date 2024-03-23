@@ -6,6 +6,7 @@ import tempfile
 import shutil
 import hashlib
 from datetime import datetime
+import difflib
 
 ### Hardcoded Config ###
 USR = "foo"
@@ -16,6 +17,7 @@ NULL_SHA1 = 0000000000000000000000000000000000000000
 
 BASE_DIR = ".roy/" # Data will reside in project specific directory
 MASTER_VOLUME = ".roy/master" 
+STAGED_CACHE = ".roy/cache/staged" 
 
 def perror(msg):
     print("error: " + msg)
@@ -45,6 +47,7 @@ class VC:
 def build_vc_instance():
     pass
 
+# Hash value is built from author name, timestamp and commit message
 def create_hash(name, timestamp, commit_msg):
     m = hashlib.sha1()
 
@@ -70,20 +73,31 @@ def setup():
     
     touch(MASTER_VOLUME)
 
+
+def diff_file(f1, f2):
+    with open(f1, 'r') as f:
+        lines1 = f.read().strip().splitlines()
+
+    with open(f2, 'r') as f:
+        lines2 = f.read().strip().splitlines()
+
+    res = ""
+    
+    for line in difflib.unified_diff(lines1, lines2, fromfile='file1', tofile='file2', lineterm=''):
+        res += line + '\n'
+
+    print("IN diff_file()", res)
+
+    return res
+
 def diff(head_node):
     # Open cache
     # Compare differences
     # Print to Screen
     pass
 
-def add(head_node, commit_log):
-    # Write to cache
-    with open(MASTER_VOLUME, 'a') as f:
-        # create log
-        # if volume empty, pass null id to indicate start
-
-        f.write(commit_log)
-        f.close()
+def add(commit_log):
+    pass
 
 def log(root):
     pass
@@ -129,6 +143,8 @@ def main():
         # Test: create hash
         case "-ch":
             create_hash("foo test", str(datetime.now()), "test commit") 
+        case "-diff":
+            diff_file("./test_diff1", "./test_diff2")
 
 if __name__ == "__main__":
     main()
