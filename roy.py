@@ -8,15 +8,17 @@ import hashlib
 from datetime import datetime
 import difflib
 
-### Hardcoded Config ###
-USR = "foo"
-
 # Denotes an initial commit
 NULL_SHA1 = 0000000000000000000000000000000000000000 
 
-BASE_DIR = ".roy/" # Data will reside in project specific directory
+### PATHS ####
+BASE_DIR = ".roy/" # base dir for Roy instance
 MASTER_VOLUME = ".roy/master/" 
 CACHE_VOLUME = ".roy/cache/" 
+COMMIT_VOLUME = ".roy/cache/" 
+CHANGELOG_PATH = ".roy/changelog/" 
+CONFIG_PATH = ".roy/changelog/" 
+IGNORELIST_PATH = ".roy/.royignore"
 
 def perror(msg):
     print("error: " + msg)
@@ -115,6 +117,7 @@ def diff():
 def add(commit_log):
     pass
 
+# View Commits
 def log(root):
     pass
 
@@ -127,15 +130,18 @@ usage: roy [-h | --help] <command> [<args>]
 
 commands:
 start a VCS 
-   setup    Setup directory for version control system
+   setup                    Setup directory for version control system
 show changes
-   diff     Show current changes to files that were made
+   diff                     Show current changes to files that were made
 stage changes
-   add      Stage current changes
+   add                      Stage current changes
 sync changes
-   sync     Sync changes to main
+   sync                     Sync changes to master
+view changelog
+   log                      View changelog of commits 
+checkout a commit 
+   checkout <commit-id>     Switch to a commit 
 """
-
 
 ### === Driver === ###
 def usage(msg=""):

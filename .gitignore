@@ -1,6 +1,7 @@
 # Build it yourself!
 .roy
 .roy.conf
+.royignore
 
 test_diff1
 test_diff2
