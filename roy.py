@@ -10,14 +10,13 @@ import difflib
 
 ### Hardcoded Config ###
 USR = "foo"
-### Hardcoded Config END ###
 
 # Denotes an initial commit
 NULL_SHA1 = 0000000000000000000000000000000000000000 
 
 BASE_DIR = ".roy/" # Data will reside in project specific directory
-MASTER_VOLUME = ".roy/master" 
-STAGED_CACHE = ".roy/cache/staged" 
+MASTER_VOLUME = ".roy/master/" 
+CACHE_VOLUME = ".roy/cache/" 
 
 def perror(msg):
     print("error: " + msg)
@@ -83,18 +82,35 @@ def diff_file(f1, f2):
 
     res = ""
     
-    for line in difflib.unified_diff(lines1, lines2, fromfile='file1', tofile='file2', lineterm=''):
+    for line in difflib.unified_diff(lines1, lines2, fromfile=f1, tofile=f2, lineterm=''):
         res += line + '\n'
-
-    print("IN diff_file()", res)
 
     return res
 
-def diff(head_node):
-    # Open cache
-    # Compare differences
-    # Print to Screen
-    pass
+def diff():
+    cwd = os.getcwd()
+    master_dir = MASTER_VOLUME 
+    ignore = os.path.join(cwd, ".royignore")
+    ignore_list = []
+
+    with open (ignore) as f:
+        lines = f.readlines()
+
+    for l in lines:
+        ignore_list.append(cwd + '/' + l.strip())
+
+    for filename in os.listdir(cwd):
+        f1 = os.path.join(cwd, filename)
+        f2 = os.path.join(master_dir, filename)
+
+        if os.path.isfile(f1) and os.path.isfile(f2):
+            print(diff_file(f1, f2))
+        elif str(f1) in ignore_list:
+            print("ignoring ", f1)
+            continue
+        else:
+            perror("could not find matching file in working directory")
+            print(f1, f2)
 
 def add(commit_log):
     pass
@@ -140,11 +156,8 @@ def main():
             usage()
         case "--help":
             usage()
-        # Test: create hash
-        case "-ch":
-            create_hash("foo test", str(datetime.now()), "test commit") 
         case "-diff":
-            diff_file("./test_diff1", "./test_diff2")
+            diff()
 
 if __name__ == "__main__":
     main()
