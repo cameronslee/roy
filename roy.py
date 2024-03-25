@@ -11,18 +11,39 @@ import difflib
 # Denotes an initial commit
 NULL_SHA1 = 0000000000000000000000000000000000000000 
 
-### PATHS ####
+# Usage message 
+usage_string = """
+usage: roy [-h | --help] <command> [<args>] 
+
+commands:
+start a VCS 
+   setup                    Setup directory for version control system
+show changes
+   diff                     Show current changes to files that were made
+stage changes
+   add                      Stage current changes
+sync changes
+   sync                     Sync changes to master
+view changelog
+   log                      View changelog of commits 
+checkout a commit 
+   checkout <commit-id>     Switch to a commit 
+"""
+
+### === PATHS === ####
 BASE_DIR = ".roy/" # base dir for Roy instance
 MASTER_VOLUME = ".roy/master/" 
 CACHE_VOLUME = ".roy/cache/" 
-COMMIT_VOLUME = ".roy/cache/" 
+COMMIT_VOLUME = ".roy/commits/" 
 CHANGELOG_PATH = ".roy/changelog/" 
 CONFIG_PATH = ".roy/changelog/" 
 IGNORELIST_PATH = ".roy/.royignore"
 
+# Error Handles
 def perror(msg):
     print("error: " + msg)
 
+### === Data Stuctures - used for navigating change history === ###
 # Each commit will be a singly linked list node
 class Commit:
     def __init__(self, commit_id, author, commit_message, files, timestamp):
@@ -60,12 +81,13 @@ def create_hash(name, timestamp, commit_msg):
 
     return m
 
+# Create file and set timestamp
 def touch(path):
     with open(path, 'a') as f:
         os.utime(path, None) # set access and modified times
         f.close()
 
-# Commands
+### === Roy Command Functionality === ###
 def setup():
     # already exists, exit setup
     if os.path.exists(BASE_DIR):
@@ -91,9 +113,15 @@ def diff_file(f1, f2):
 
 def diff():
     cwd = os.getcwd()
-    master_dir = MASTER_VOLUME 
+    master_dir = os.listdir(MASTER_VOLUME)
     ignore = os.path.join(cwd, ".royignore")
     ignore_list = []
+    changed_list = []
+
+    # In the case that diff is run before a commit is made
+    if len(master_dir) == 0:
+        perror("master volume not set up")
+        return -1
 
     with open (ignore) as f:
         lines = f.readlines()
@@ -103,45 +131,34 @@ def diff():
 
     for filename in os.listdir(cwd):
         f1 = os.path.join(cwd, filename)
-        f2 = os.path.join(master_dir, filename)
+        f2 = os.path.join(MASTER_VOLUME, filename)
 
-        if os.path.isfile(f1) and os.path.isfile(f2):
-            print(diff_file(f1, f2))
-        elif str(f1) in ignore_list:
+        if str(f1) in ignore_list:
             print("ignoring ", f1)
             continue
+        elif os.path.isfile(f1) and os.path.isfile(f2):
+            print(diff_file(f1, f2))
+            #add to changed_list
+            changed_list.append(f1)
+
         else:
             perror("could not find matching file in working directory")
             print(f1, f2)
 
-def add(commit_log):
+    return changed_list
+
+# Add file(s) to the local cache staging directory
+# to_stage: list of paths in the project directory to stage/copy to cache
+def add(to_stage):
     pass
 
 # View Commits
 def log(root):
     pass
 
-def send(root):
+# Sync changes to the master volume 
+def sync(commit_msg):
     pass
-
-
-usage_string = """
-usage: roy [-h | --help] <command> [<args>] 
-
-commands:
-start a VCS 
-   setup                    Setup directory for version control system
-show changes
-   diff                     Show current changes to files that were made
-stage changes
-   add                      Stage current changes
-sync changes
-   sync                     Sync changes to master
-view changelog
-   log                      View changelog of commits 
-checkout a commit 
-   checkout <commit-id>     Switch to a commit 
-"""
 
 ### === Driver === ###
 def usage(msg=""):
