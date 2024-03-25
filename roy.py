@@ -11,25 +11,6 @@ import difflib
 # Denotes an initial commit
 NULL_SHA1 = 0000000000000000000000000000000000000000 
 
-# Usage message 
-usage_string = """
-usage: roy [-h | --help] <command> [<args>] 
-
-commands:
-start a VCS 
-   setup                    Setup directory for version control system
-show changes
-   diff                     Show current changes to files that were made
-stage changes
-   add                      Stage current changes
-sync changes
-   sync                     Sync changes to master
-view changelog
-   log                      View changelog of commits 
-checkout a commit 
-   checkout <commit-id>     Switch to a commit 
-"""
-
 ### === PATHS === ####
 BASE_DIR = ".roy/" # base dir for Roy instance
 MASTER_VOLUME = ".roy/master/" 
@@ -86,6 +67,12 @@ def touch(path):
     with open(path, 'a') as f:
         os.utime(path, None) # set access and modified times
         f.close()
+
+def clear_cache_volume():
+    for filename in os.listdir(CACHE_VOLUME):
+        os.remove(filename)
+
+    assert len(os.listdir(CACHE_VOLUME)) == 0, "cache error: could not be cleared"
 
 ### === Roy Command Functionality === ###
 def setup():
@@ -161,6 +148,26 @@ def sync(commit_msg):
     pass
 
 ### === Driver === ###
+
+# Usage message 
+usage_string = """
+usage: roy [-h | --help] <command> [<args>] 
+
+commands:
+start a VCS 
+   setup                    Setup directory for version control system
+show changes
+   diff                     Show current changes to files that were made
+stage changes
+   add <filename>           Stage changes
+sync changes
+   sync                     Sync changes to master
+view changelog
+   log                      View changelog of commits 
+checkout a commit 
+   checkout <commit-id>     Switch to a commit 
+"""
+
 def usage(msg=""):
     print(usage_string)
 
@@ -179,8 +186,31 @@ def main():
             usage()
         case "--help":
             usage()
-        case "-diff":
+        case "setup":
+            setup()
+            print("roy: setup complete")
+        case "diff":
             diff()
+        case "add":
+            if len(sys.argv) == 3:
+                arg1 = sys.argv[2]
+
+                if not os.path.isfile(arg1):
+                    perror("add - could not find " + arg1)
+                    exit(1)
+
+                # add to cache
+                buf = arg1.split('/')
+                base_name = buf[len(buf) - 1]
+
+                shutil.copyfile(arg1, CACHE_VOLUME+base_name)
+
+                assert os.path.isfile(CACHE_VOLUME+base_name), "Unable to write " + base_name + " to cache"
+                return
+            perror("add command without <filename> is not supported yet")
+        case "sync":
+            sync()
+
 
 if __name__ == "__main__":
     main()
