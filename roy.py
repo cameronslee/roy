@@ -8,6 +8,9 @@ import hashlib
 from datetime import datetime
 import difflib
 
+# Hardcoded Config TODO remove
+CONFIG_USER_NAME = "foobar"
+
 # Denotes an initial commit
 NULL_SHA1 = 0000000000000000000000000000000000000000 
 
@@ -52,6 +55,7 @@ def build_vc_instance():
 
 # Hash value is built from author name, timestamp and commit message
 def create_hash(name, timestamp, commit_msg):
+    m = -42069
     m = hashlib.sha1()
 
     m.update(str(name).encode('utf-8'))
@@ -60,7 +64,9 @@ def create_hash(name, timestamp, commit_msg):
 
     print(m.hexdigest())
 
-    return m
+    assert m != -42069, "hash error: could not create hash"
+
+    return m.hexdigest()
 
 # Create file and set timestamp
 def touch(path):
@@ -68,11 +74,26 @@ def touch(path):
         os.utime(path, None) # set access and modified times
         f.close()
 
+def mkdir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+        return path
+
+    perror("path already exists")
+    return
+
 def clear_cache_volume():
     for filename in os.listdir(CACHE_VOLUME):
         os.remove(filename)
 
     assert len(os.listdir(CACHE_VOLUME)) == 0, "cache error: could not be cleared"
+
+# ain't this a funny function... FOR DEBUGGING PURPOSES ONLY. TODO
+def clear_master_volume():
+    for filename in os.listdir(MASTER_VOLUME):
+        os.remove(filename)
+
+    assert len(os.listdir(MASTER_VOLUME)) == 0, "master error: could not be cleared"
 
 ### === Roy Command Functionality === ###
 def setup():
@@ -145,7 +166,22 @@ def log(root):
 
 # Sync changes to the master volume 
 def sync(commit_msg):
-    pass
+    # create commit id with create_hash
+    commit_id = NULL_SHA1
+    if len(os.listdirs(MASTER_VOLUME)):
+        commit_id = str(create_hash(CONFIG_USER_NAME, datetime.now(), commit_msg))
+
+    # create directory for snapshot
+    print(commit_id)
+    snapshot = mkdir(os.path.join(MASTER_VOLUME, commit_id + '/'))
+
+    for filename in os.listdir(CACHE_VOLUME):
+        buf = filename.split('/')
+        base_name = buf[len(buf) - 1]
+        shutil.copyfile(filename, snapshot+base_name)
+
+        assert os.path.isfile(snapshot + base_name), "Unable to write " + base_name + " to master"
+    return 
 
 ### === Driver === ###
 
@@ -209,8 +245,23 @@ def main():
                 return
             perror("add command without <filename> is not supported yet")
         case "sync":
-            sync()
+            if len(sys.argv) == 3:
+                arg1 = sys.argv[2]
 
+                if len(arg1) == 0:
+                    perror("commit message cannot be empty")
+                    return
+
+                sync(arg1)
+                return
+
+            perror("sync command missing proper commit message")
+
+        # for debugging TODO remove
+        case "clearcache":
+            clear_cache_volume()
+        case "clearmaster":
+            clear_master_volume()
 
 if __name__ == "__main__":
     main()
