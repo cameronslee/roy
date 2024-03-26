@@ -1,4 +1,17 @@
 # Roy: A Simple Version Control System
+```
+8888888b.                   
+888   Y88b                  
+888    888                  
+888   d88P .d88b.  888  888 
+8888888P" d88""88b 888  888 
+888 T88b  888  888 888  888 
+888  T88b Y88..88P Y88b 888 
+888   T88b "Y88P"   "Y88888 
+                        888 
+                   Y8b d88P 
+                    "Y88P"  
+```
 
 ## Main Principles
 
@@ -24,7 +37,7 @@ $ roy setup                                 # sets up version control system
 
 $ roy diff                                  # shows changes that have been made
 
-$ roy add                                   # stages current changes
+$ roy stage <filename>                      # stages changes to cache
 
 $ roy sync                                  # sync changes to master volume 
 
@@ -40,8 +53,9 @@ systems if so desired.
 PROJECT DIRECTORY
 |-- .roy
 |   |
-|   |-- master/                             # most up to date copy
-|   |-- cache/                              # local changes
+|   |-- master/                             # master volume 
+|       |-- headref/                        # most recent version
+|   |-- cache/                              # local staged changes
 |   |-- commits/                            # directory states, based on commit ID 
 |   |-- changelog                           # changelog for each commit made
 |
