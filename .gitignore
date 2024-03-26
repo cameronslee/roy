@@ -1,7 +1,10 @@
 # Build it yourself!
 .roy
-.roy.conf
+.royconfig
 .royignore
 
-test_diff1
-test_diff2
+build/
+dist/
+roy.spec
+.venv/
+
