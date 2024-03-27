@@ -21,8 +21,6 @@ from datetime import datetime
 import difflib
 
 ### === Globals === ###
-# Hardcoded Config TODO remove
-CONFIG_USER_NAME = "foobar"
 # Denotes an initial commit
 NULL_SHA1 = 0000000000000000000000000000000000000000 
 
@@ -34,8 +32,8 @@ HEAD_REF_MASTER = ".roy/master/headref/"
 CACHE_VOLUME = ".roy/cache/" 
 COMMIT_VOLUME = ".roy/commits/" 
 CHANGELOG_PATH = ".roy/changelog/" 
-CONFIG_PATH = ".roy/.royconfig" 
-IGNORELIST_PATH = ".roy/.royignore"
+CONFIG_PATH = CWD + "/.royconfig" 
+IGNORELIST_PATH = CWD + "/.royignore"
 
 ### === Error Handles === ###
 def perror(msg):
@@ -108,6 +106,13 @@ def clear_headref_master():
 
 ### === Roy Command Functionality === ###
 def setup():
+    # check for config file setup
+    if not os.path.exists(CONFIG_PATH):
+        name = input("roy_config_user_name = ") 
+        with open(CONFIG_PATH, 'w') as f:
+            f.write(name)
+            f.close()
+
     # already exists, exit setup
     if os.path.exists(BASE_DIR):
         perror("roy version control system already set up")
