@@ -31,19 +31,15 @@ Roy should be intuitive.
 Complex commands to augment your working tree result in extra overhead during 
 the development process.
 
-Therefore, the commands Roy supports are simply the following:
+A typical Roy workflow can be visualized as follows
 ```
-$ roy setup                                 # sets up version control system
-
-$ roy diff                                  # shows changes that have been made
-
-$ roy stage <filename>                      # stages changes to cache
-
-$ roy sync                                  # sync changes to master volume 
-
-$ roy log                                   # view changelog of commits
-
-$ roy checkout <commit-id>                  # switch to a commit 
+      ----------       ----------       ----------
+      | Make   | ----> | Stage  | ----> | Sync   |
+      | Change |       | Change |       | Change |
+      ----------       ----------       ----------
+      Change in        Update Cache     Update master 
+      current working
+      directory
 ```
 
 #### Roy Directory Architecture
@@ -69,3 +65,31 @@ directory.
 
 Roy can be configured to have versioning exist outside of the project.
 
+## Installation
+#### Build from source
+```
+
+```
+
+## Usage
+```
+usage: roy [-h | --help] <command> [<args>] 
+
+commands:
+start a VCS 
+   setup                    Setup directory for version control system
+edit config 
+   config                   Edit the config file
+show changes
+   diff                     Shows changes between current working directory and master volume
+stage changes
+   stage <filename>         Stage changes to cache
+clear cache
+   clear                    Clears staged changes/cache volume
+sync changes
+   sync <commit-msg>        Sync changes to master
+view changelog
+   log                      View changelog of commits 
+checkout a commit 
+   checkout <commit-id>     Switch to a commit 
+```

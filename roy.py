@@ -23,15 +23,16 @@ import difflib
 ### === Globals === ###
 # Denotes an initial commit
 NULL_SHA1 = 0000000000000000000000000000000000000000 
+HEAD_ID = NULL_SHA1
 
 ### === PATHS === ####
 CWD = os.getcwd()
 BASE_DIR = ".roy/" # base dir for Roy instance
 MASTER_VOLUME = ".roy/master/" 
-HEAD_REF_MASTER = ".roy/master/headref/" 
+TAIL_REF_MASTER = ".roy/master/TAIL_REF_MASTER/" 
 CACHE_VOLUME = ".roy/cache/" 
 COMMIT_VOLUME = ".roy/commits/" 
-CHANGELOG_PATH = ".roy/changelog/" 
+CHANGELOG_PATH = ".roy/changelog" 
 CONFIG_PATH = CWD + "/.royconfig" 
 IGNORELIST_PATH = CWD + "/.royignore"
 
@@ -46,21 +47,10 @@ class Commit:
         self.commit_id = commit_id
         self.commit_message = commit_message
         self.author = author
-        self.files = files  # Each commit, files will be updated
         self.timestamp = timestamp
         self.next = None
 
-# Version Control Instance
-# stores a reference to the head of commits
-class VC:
-    def __init__(self, basedir=BASE_DIR, head_ref=None):
-        self.basedir = os.path.realpath(basedir)
-        self.tempdir = os.path.join(self.basedir, "tmp/")
-        os.makedirs(self.tempdir, exist_ok=True)
-        self.head_ref = head_ref
-
 ### === Helpers === ###
-
 # Hash value is built from author name, timestamp and commit message
 def create_hash(name, timestamp, commit_msg):
     m = -42069
@@ -99,19 +89,49 @@ def clear_cache_volume():
 # ain't this a funny function... FOR DEBUGGING PURPOSES ONLY. TODO
 # Clear head ref in master volume
 def clear_headref_master():
-    for filename in os.listdir(HEAD_REF_MASTER):
+    for filename in os.listdir(TAIL_REF_MASTER):
         os.remove(filename)
 
-    assert len(os.listdir(HEAD_REF_MASTER)) == 0, "master error: could not be cleared"
+    assert len(os.listdir(TAIL_REF_MASTER)) == 0, "master error: could not be cleared"
+
+### === Config === ###
+def print_config():
+    with open(CONFIG_PATH, 'r') as f:
+        res = f.readlines()
+        f.close()
+
+        for r in res:
+            print(r)
+
+        return
+
+    perror("print_config() could no process .royconfig")
+
+def write_config():
+    pass
+
+def read_config():
+    if not os.path.exists(CONFIG_PATH):
+        name = input("royconfig_author_name = ") 
+        with open(CONFIG_PATH, 'w') as f:
+            f.write(name)
+            f.close()
+            
+    # exists, read and return
+    with open(CONFIG_PATH, 'r') as f:
+        res = f.readlines()[0]
+        f.close()
+        print("author: ", res)
+        return res
+
+
+    perror("read_config() could not process .royconfig")
+    exit(1)
 
 ### === Roy Command Functionality === ###
 def setup():
     # check for config file setup
-    if not os.path.exists(CONFIG_PATH):
-        name = input("roy_config_user_name = ") 
-        with open(CONFIG_PATH, 'w') as f:
-            f.write(name)
-            f.close()
+    read_config()
 
     # already exists, exit setup
     if os.path.exists(BASE_DIR):
@@ -120,7 +140,7 @@ def setup():
     
     mkdir(BASE_DIR)
     mkdir(MASTER_VOLUME)
-    mkdir(HEAD_REF_MASTER)
+    mkdir(TAIL_REF_MASTER)
     mkdir(CACHE_VOLUME)
     mkdir(CHANGELOG_PATH)
     touch(CONFIG_PATH)
@@ -162,7 +182,9 @@ def diff():
 
     for filename in os.listdir(CACHE_VOLUME):
         f1 = os.path.join(cwd, filename)
-        f2 = os.path.join(cwd, HEAD_REF_MASTER + filename)
+        # refactor to include a reference to the tail
+        # TODO read changelog to obtain tail reference
+        f2 = os.path.join(cwd, TAIL_REF_MASTER + filename)
 
         if str(f1) in ignore_list:
             print("ignoring ", f1)
@@ -193,7 +215,7 @@ def stage(to_stage):
             shutil.copyfile(arg1, CACHE_VOLUME+base_name)
 
             # Update head reference in master volume
-            shutil.copyfile(arg1, HEAD_REF_MASTER+base_name)
+            shutil.copyfile(arg1, TAIL_REF_MASTER+base_name)
 
             assert os.path.isfile(CACHE_VOLUME+base_name), "Unable to write " + base_name + " to cache"
             return
@@ -201,8 +223,12 @@ def stage(to_stage):
             perror("failed to stage - " + arg1)
     perror("add command without <filename> is not supported yet")
 
-# View Commits
-def log(root):
+# View Changelog
+def log():
+    pass
+
+# Switch to a version
+def checkout(root):
     pass
 
 # Sync changes to the master volume 
@@ -214,14 +240,12 @@ def sync(commit_msg):
             perror("commit message cannot be empty")
             return
 
+        # Write to .changelog
         # create commit id with create_hash
-        commit_id = NULL_SHA1
-        if len(os.listdir(HEAD_REF_MASTER)):
-            commit_id = str(create_hash(CONFIG_USER_NAME, datetime.now(), commit_msg))
+        commit_id = str(create_hash(CONFIG_USER_NAME, datetime.now(), commit_msg))
+        
 
-        # create directory for snapshot
-        print(commit_id)
-        snapshot = mkdir(os.path.join(HEAD_REF_MASTER, commit_id + '/'))
+        snapshot = mkdir(os.path.join(MASTER_VOLUME, commit_id + '/'))
 
         for filename in os.listdir(CACHE_VOLUME):
             buf = filename.split('/')
@@ -229,24 +253,29 @@ def sync(commit_msg):
             shutil.copyfile(filename, snapshot+base_name)
 
             assert os.path.isfile(snapshot + base_name), "Unable to write " + base_name + " to master"
+
+        # Clear cache
+        clear_cache_volume();
         return 
     else:
         perror("sync command missing proper commit message")
         print("usage: \n   sync <commit-msg> -- example: sync \"initial commit\"")
 
 ### === Driver === ###
-
-# Usage message 
 usage_string = """
 usage: roy [-h | --help] <command> [<args>] 
 
 commands:
 start a VCS 
    setup                    Setup directory for version control system
+edit config 
+   config                   Edit the config file
 show changes
-   diff                     Show current changes to files that were made
+   diff                     Shows changes between current working directory and master volume
 stage changes
    stage <filename>         Stage changes to cache
+clear cache
+   clear                    Clears staged changes/cache volume
 sync changes
    sync <commit-msg>        Sync changes to master
 view changelog
@@ -281,12 +310,10 @@ def main():
             stage()
         case "sync":
             sync()
-
-        # for debugging TODO remove
-        case "clearcache":
+        case "clear":
             clear_cache_volume()
-        case "clearheadref":
-            clear_headref_master()
+        case "config":
+            read_config()
 
 if __name__ == "__main__":
     main()
