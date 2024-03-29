@@ -230,7 +230,6 @@ def get_tail():
     
     return res[-4]
 
-
 # View Changelog
 def log():
     with open(CHANGELOG_PATH, 'r') as f:

@@ -8,3 +8,5 @@ dist/
 roy.spec
 .venv/
 
+__pycache__
+.pytest_cache
