@@ -198,22 +198,38 @@ def diff():
 # to_stage: list of paths in the project directory to stage/copy to cache
 def stage():
     if len(sys.argv) == 3:
-        arg1 = CWD + '/' + sys.argv[2]
-        print("staging", arg1)
+        to_stage = CWD + '/' + sys.argv[2] 
+        print("staging", to_stage)
 
-        if os.path.isfile(arg1):
+        if os.path.isfile(to_stage):
             # add to cache
-            buf = arg1.split('/')
+            buf = to_stage.split('/')
             base_name = buf[len(buf) - 1]
 
-            shutil.copyfile(arg1, CACHE_VOLUME+base_name)
+            tail_ref = MASTER_VOLUME+get_tail()+'/'
 
+            if len(diff_file(to_stage, tail_ref+base_name)) == 0:
+                print("No changes present between " + to_stage + " and " + tail_ref+base_name)
+                return
+
+            shutil.copyfile(to_stage, CACHE_VOLUME+base_name)
             assert os.path.isfile(CACHE_VOLUME+base_name), "Unable to write " + base_name + " to cache"
-
             return
+
         else:
             perror("failed to stage - " + arg1)
-    perror("add command without <filename> is not supported yet")
+
+    perror(" usage - roy stage <filename>   Stage changes to cache")
+    exit(1)
+
+# retrieves the commit_id of the most recent commit in changelog
+def get_tail():
+    with open(CHANGELOG_PATH, 'r') as f:
+        res = f.readlines()
+        f.close()
+    
+    return res[-4]
+
 
 # View Changelog
 def log():
@@ -340,6 +356,10 @@ def main():
             clear_cache_volume()
         case "config":
             read_config()
+
+        # Debug
+        case "tail":
+            get_tail()
 
 if __name__ == "__main__":
     main()
