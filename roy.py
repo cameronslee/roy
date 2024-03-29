@@ -22,7 +22,7 @@ import difflib
 
 ### === Globals === ###
 # Denotes an initial commit
-NULL_SHA1 = 0000000000000000000000000000000000000000 
+NULL_SHA1 = '0000000000000000000000000000000000000000'
 HEAD_ID = NULL_SHA1
 
 ### === PATHS === ####
@@ -258,7 +258,7 @@ def sync():
         author = read_config()[0]
         timestamp = curr_time
         
-        with open(CHANGELOG_PATH, 'w+') as f:
+        with open(CHANGELOG_PATH, 'a') as f:
             f.write(str(commit_id))
             f.write('\n')
             f.write(commit_msg)
