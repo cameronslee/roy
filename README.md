@@ -68,7 +68,8 @@ Roy can be configured to have versioning exist outside of the project.
 ## Installation
 #### Build from source
 ```
-
+$ ./activate.sh                # activate virtual environment for build
+$ ./build.sh                   # build  -  roy found in dist/, will refactor for install on system
 ```
 
 ## Usage
@@ -92,4 +93,13 @@ view changelog
    log                      View changelog of commits 
 checkout a commit 
    checkout <commit-id>     Switch to a commit 
+```
+
+#### Example - Getting Started
+```
+$ roy setup
+$ touch README && echo "readme" >  ./README
+$ roy stage README
+$ roy sync "first commit" 
+$ roy log                      # view changelog containing the first commit
 ```
