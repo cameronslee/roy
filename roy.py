@@ -29,7 +29,6 @@ HEAD_ID = NULL_SHA1
 CWD = os.getcwd()
 BASE_DIR = ".roy/" # base dir for Roy instance
 MASTER_VOLUME = ".roy/master/" 
-TAIL_REF_MASTER = ".roy/master/TAIL_REF_MASTER/" 
 CACHE_VOLUME = ".roy/cache/" 
 COMMIT_VOLUME = ".roy/commits/" 
 CHANGELOG_PATH = ".roy/changelog" 
@@ -48,7 +47,6 @@ class Commit:
         self.commit_message = commit_message
         self.author = author
         self.timestamp = timestamp
-        self.next = None
 
 ### === Helpers === ###
 # Hash value is built from author name, timestamp and commit message
@@ -82,7 +80,7 @@ def mkdir(path):
 
 def clear_cache_volume():
     for filename in os.listdir(CACHE_VOLUME):
-        os.remove(filename)
+        os.remove(CACHE_VOLUME+'/'+filename)
 
     assert len(os.listdir(CACHE_VOLUME)) == 0, "cache error: could not be cleared"
 
@@ -119,9 +117,8 @@ def read_config():
             
     # exists, read and return
     with open(CONFIG_PATH, 'r') as f:
-        res = f.readlines()[0]
+        res = f.readlines()
         f.close()
-        print("author: ", res)
         return res
 
 
@@ -140,9 +137,8 @@ def setup():
     
     mkdir(BASE_DIR)
     mkdir(MASTER_VOLUME)
-    mkdir(TAIL_REF_MASTER)
     mkdir(CACHE_VOLUME)
-    mkdir(CHANGELOG_PATH)
+    touch(CHANGELOG_PATH)
     touch(CONFIG_PATH)
     touch(IGNORELIST_PATH)
 
@@ -200,24 +196,20 @@ def diff():
 
 # Add file(s) to the local cache staging directory
 # to_stage: list of paths in the project directory to stage/copy to cache
-def stage(to_stage):
+def stage():
     if len(sys.argv) == 3:
-        arg1 = sys.argv[2]
+        arg1 = CWD + '/' + sys.argv[2]
+        print("staging", arg1)
 
-        if not os.path.isfile(arg1):
-            perror("add - could not find " + arg1)
-            exit(1)
-
+        if os.path.isfile(arg1):
             # add to cache
             buf = arg1.split('/')
             base_name = buf[len(buf) - 1]
 
             shutil.copyfile(arg1, CACHE_VOLUME+base_name)
 
-            # Update head reference in master volume
-            shutil.copyfile(arg1, TAIL_REF_MASTER+base_name)
-
             assert os.path.isfile(CACHE_VOLUME+base_name), "Unable to write " + base_name + " to cache"
+
             return
         else:
             perror("failed to stage - " + arg1)
@@ -225,16 +217,31 @@ def stage(to_stage):
 
 # View Changelog
 def log():
-    pass
+    with open(CHANGELOG_PATH, 'r') as f:
+        res = f.readlines()
+        f.close()
+
+    for r in res:
+        print(r)
+
+    return
+
+
+    perror("log() could no process changelog")
+    exit(1)
 
 # Switch to a version
 def checkout(root):
     pass
 
 # Sync changes to the master volume 
-def sync(commit_msg):
-    if len(sys.argv) == 3 and sys.argv[0] == '"' and sys.argv[-1] == '"':
-        arg1 = sys.argv[2].strip('\"')
+def sync():
+    if os.stat(CACHE_VOLUME).st_size == 0:
+        perror("nothing to sync from cache")
+        return
+
+    if len(sys.argv) == 3:
+        arg1 = sys.argv[2]
 
         if len(arg1) == 0:
             perror("commit message cannot be empty")
@@ -242,15 +249,32 @@ def sync(commit_msg):
 
         # Write to .changelog
         # create commit id with create_hash
-        commit_id = str(create_hash(CONFIG_USER_NAME, datetime.now(), commit_msg))
+        curr_time = datetime.now()
+        commit_id = NULL_SHA1
+        commit_msg = arg1
         
+        if os.stat(CHANGELOG_PATH).st_size != 0:
+            commit_id = str(create_hash(read_config()[0], curr_time, commit_msg))
+        author = read_config()[0]
+        timestamp = curr_time
+        
+        with open(CHANGELOG_PATH, 'w+') as f:
+            f.write(str(commit_id))
+            f.write('\n')
+            f.write(commit_msg)
+            f.write('\n')
+            f.write(author)
+            f.write('\n')
+            f.write(str(timestamp))
+            f.write('\n')
+            f.close()
 
-        snapshot = mkdir(os.path.join(MASTER_VOLUME, commit_id + '/'))
+        snapshot = mkdir(os.path.join(MASTER_VOLUME, str(commit_id) + '/'))
 
         for filename in os.listdir(CACHE_VOLUME):
             buf = filename.split('/')
             base_name = buf[len(buf) - 1]
-            shutil.copyfile(filename, snapshot+base_name)
+            shutil.copyfile(CACHE_VOLUME+'/'+filename, snapshot+base_name)
 
             assert os.path.isfile(snapshot + base_name), "Unable to write " + base_name + " to master"
 
@@ -302,6 +326,8 @@ def main():
             usage()
         case "--help":
             usage()
+        case "log":
+            log()
         case "setup":
             setup()
         case "diff":
